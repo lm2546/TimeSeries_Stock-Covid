@@ -1,0 +1,65 @@
+---
+title: "Data Visualization"
+author: "Lin Meng"
+date: "2022/1/28"
+output: html_document
+---
+
+## Load Pacakage
+```{r}
+library(plotly)
+library(ggplot2)
+library(zoo)
+```
+
+## Read CSV
+```{r}
+covid <- read.csv("data/covid.csv")
+vaccine_name <- read.csv("data/country_vaccinations_by_manufacturer.csv")
+stock <- read.csv("data/stock.csv")
+Johnson <- read.csv("data/cleaned_Johnson.csv")
+Moderna <- read.csv("data/cleaned_Moderna.csv")
+Pfizer <- read.csv("data/cleaned_Pfizer.csv")
+```
+
+## Visualization
+
+### Covid
+```{r}
+#covid$Date <- as.POSIXct(covid$Date,format="%Y-%m-%d")
+covid <- covid[order(covid$Date),]
+fig <- plot_ly(covid, x = ~Date, y = ~new_cases, name='New Cases' ,type = 'scatter', mode = 'lines')
+fig <- fig %>% add_trace(y = ~new_deaths, name='New Deaths' ,type = 'scatter', mode = 'lines') 
+fig
+```
+```{r}
+df2 <- covid
+df2$Date <- as.Date(as.yearmon(df2$Date,"%Y-%m"))
+df2 <- df2[order(df2$Date),]
+row.names(df2) <- NULL
+df2 <- aggregate(.~ Date, df2, sum)
+```
+
+```{r message=FALSE, warning=FALSE}
+fig2 <- plot_ly(covid, x = ~Date, y = ~people_fully_vaccinated,type = 'scatter',
+                color = ~new_cases,colors = colorRamp(c("green", "red")), size = ~new_cases)
+
+
+#htmlwidgets::saveWidget(as_widget(fig2), "visualization/covid1.html")
+```
+```{r}
+fig <- plot_ly(covid, x = ~Date, y = ~new_cases, z = ~new_deaths, type = 'scatter3d', mode = 'lines',hoverinfo = 'text',
+               line = list(width = 4, color = ~total_vaccinations, colorscale = list(c(0,'Red'), c(1,'Green'))),
+                      text = ~paste('</br> Date: ', Date,'</br> New Cases: ', new_cases,
+                      '</br> New Deaths: ', new_deaths,'</br> Total Vaccinations: ',total_vaccinations ))
+
+scene <- list(xaxis = list(title = 'Date'),
+              yaxis = list(title = 'New Cases'),
+              zaxis = list(title = 'New Deaths'))
+fig <- fig %>% layout(title = 'New Cases and New Deaths',
+                      scene=scene)
+fig
+htmlwidgets::saveWidget(as_widget(fig), "visualization/covid.html")
+```
+
+

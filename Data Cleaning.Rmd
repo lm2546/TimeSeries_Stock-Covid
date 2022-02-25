@@ -1,0 +1,101 @@
+---
+title: "Data Cleaning"
+author: "Lin Meng"
+date: "2022/1/28"
+output: html_document
+---
+
+## Load Pacakage
+```{r}
+library(ggplot2)
+```
+
+## Read CSV
+```{r}
+covid <- read.csv("data/owid-covid-data.csv")
+vaccine_name <- read.csv("data/country_vaccinations_by_manufacturer.csv")
+stock <- read.csv("data/indexData.csv")
+```
+
+
+
+## Data Cleanning
+
+### Covid Data
+Select the columns need.
+```{r}
+covid <- covid[,c(4,5,6,8,9,35,36,37,38)]
+```
+
+```{r}
+covid$date <- as.POSIXct(covid$date,format="%Y-%m-%d")
+```
+Since the first vaccine dose was give in December 2020, the number of vaccinated people should be 0 before that.
+```{r}
+covid$total_vaccinations[covid$date < "2020-12-01"] = 0
+covid$people_vaccinated[covid$date < "2020-12-01"] = 0
+covid$people_fully_vaccinated[covid$date < "2020-12-01"] = 0
+covid$total_boosters[covid$date < "2020-12-01"] = 0
+```
+Check missing value.
+```{r}
+sum(is.na(covid))
+covid <- na.omit(covid)
+```
+```{r}
+ggplot(covid, aes(x=total_cases)) + geom_boxplot()
+ggplot(covid, aes(x=new_cases)) + geom_boxplot()
+ggplot(covid, aes(x=total_deaths)) + geom_boxplot()
+ggplot(covid, aes(x=new_deaths)) + geom_boxplot()
+ggplot(covid, aes(x=total_vaccinations)) + geom_boxplot()
+ggplot(covid, aes(x=people_vaccinated)) + geom_boxplot()
+ggplot(covid, aes(x=people_fully_vaccinated)) + geom_boxplot()
+ggplot(covid, aes(x=total_boosters)) + geom_boxplot()
+```
+
+```{r}
+covid <- covid[covid$new_cases<=3000000,]
+covid <- covid[covid$new_deaths <=17500,]
+covid <- covid[covid$total_boosters<=80000000,]
+```
+
+```{r}
+covid <- aggregate(covid[,-1],by=list(covid$date),sum)
+colnames(covid)[1] <- 'Date'
+```
+
+### Vaccine Data
+```{r}
+sum(is.na(vaccine_name))
+```
+
+```{r}
+ggplot(vaccine_name, aes(x=total_vaccinations)) + geom_boxplot()
+```
+
+### Stock Data
+Change the variable type.
+```{r}
+stock$Open <- as.numeric(stock$Open)
+stock$High <- as.numeric(stock$High)
+stock$Low <- as.numeric(stock$Low)
+stock$Close <- as.numeric(stock$Close)
+stock$Adj.Close <- as.numeric(stock$Adj.Close)
+stock$Volume <- as.numeric(stock$Volume)
+```
+
+Check missing value.
+```{r}
+sum(is.na(stock))
+stock <- na.omit(stock)
+```
+```{r}
+stock <- aggregate(stock[,-c(1,2)],by=list(stock$Date),mean)
+colnames(stock)[1] <- 'Date'
+```
+
+## Save Data
+```{r}
+write.csv(covid,"data/covid.csv", row.names = FALSE)
+write.csv(stock,'data/stock.csv', row.names = FALSE)
+```
