@@ -1,0 +1,759 @@
+---
+title: "ARIMA"
+author: "Lin Meng"
+date: "2022/2/25"
+output: html_document
+---
+
+```{r message=FALSE, warning=FALSE}
+library(ggfortify)
+library(ggplot2)
+library(fpp)
+library(stats)
+library(tsbox)
+library(stargazer)
+library(tidyverse)
+library(kableExtra)
+library(forecast)
+library(astsa)
+```
+
+## Load Data
+```{r}
+johnson <- read.csv("data/Johnson.csv ")
+moderna <- read.csv("data/Moderna.csv ")
+pfizer <- read.csv("data/Pfizer.csv ")
+vaccine <- read.csv("data/vaccine.csv")
+```
+
+## Johnson
+
+### 1 & 2
+#### Original ACF Plot 
+```{r}
+johnson.ts <- ts_ts(ts_long(johnson[,c(1,5)]))
+johnson.ts<-na.remove(johnson.ts)
+acf(johnson.ts)
+```
+#### b ADF Test
+```{r}
+adf.test(johnson.ts)
+```
+### 3
+#### a Detrend Data
+```{r}
+johnson.df<-diff(johnson.ts)
+```
+
+#### b Plot the differenced data and comment.
+```{r}
+fig1 <- autoplot(johnson.ts,series = 'Origin') + 
+  autolayer(johnson.df,series = 'Difference')
+fig1 <- fig1 +labs(title = "Johnson&Johnson Origin and Difference",
+                   x='Date',y='Value')
+fig1
+```
+
+#### c ADF Test
+```{r}
+acf(johnson.df)
+adf.test(johnson.df)
+```
+
+### 4
+#### Plot the ACF and PACF plots 
+```{r}
+par(mfrow=c(1,2))
+acf(johnson.df)
+pacf(johnson.df)
+```
+
+### 5
+#### check AIC and BIC
+
+```{r}
+fit1 <- Arima(johnson.ts, order=c(1, 1, 1),include.drift = TRUE)
+fit2 <- Arima(johnson.ts, order=c(1, 1, 3),include.drift = TRUE)
+fit3 <- Arima(johnson.ts, order=c(3, 1, 1),include.drift = TRUE)
+fit4 <- Arima(johnson.ts, order=c(3, 1, 3),include.drift = TRUE)
+r1 <- data.frame(matrix(ncol = 4, nrow = 0))
+colnames(r1) <- c('Model','AIC','BIC','AICC')
+r1[1,]<- c('ARIMA(1,1,1)',fit1$aic,fit1$bic,fit1$aicc)
+r1[2,]<- c('ARIMA(1,1,3)',fit2$aic,fit2$bic,fit2$aicc)
+r1[3,]<- c('ARIMA(3,1,1)',fit3$aic,fit3$bic,fit3$aicc)
+r1[4,]<- c('ARIMA(3,1,3)',fit4$aic,fit4$bic,fit4$aicc)
+r1 %>% 
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
+```
+
+#### Train
+```{r}
+johnson.train <- johnson.ts[1:floor(length(johnson.ts)*0.8)]
+johnson.test <- johnson.ts[(ceiling(length(johnson.ts)*0.8)+1):length(johnson.ts)]
+johnson.ar <- arima(johnson.train, order=c(1,1,3))
+summary(johnson.ar)
+```
+$$  X_{t} =  1.5264)X_{t-1}-0.5264X_{t-2}+w_{t}-0.6345w_{t-1}+1.303w_{t-2}-0.0905w_{t-3}$$
+### 6
+#### full model diagnostics
+```{r}
+sarima(johnson.train,1,1,1)
+```
+
+### 7 
+#### auto.arima
+```{r}
+auto.arima(johnson.train)
+```
+
+### 8
+#### Forecast
+```{r}
+pred1 <- forecast(johnson.ar,length(johnson.test)+50)
+autoplot(pred1) 
+autoplot(johnson.ts)
+```
+
+
+### 9 
+#### Benchmark
+```{r}
+f1 <- meanf(johnson.train,length(johnson.test)+50)
+accuracy(f1)
+checkresiduals(f1)
+
+f2 <- naive(johnson.train,length(johnson.test)+50)
+accuracy(f2)
+checkresiduals(f2)
+
+f3 <- rwf(johnson.train,length(johnson.test)+50)
+accuracy(f3)
+checkresiduals(f3)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(Metrics)
+a1 <- data.frame(matrix(ncol = 3, nrow = 0))
+colnames(a1) <- c('Method','MAE','MSE')
+a1[1,] <- c('Mean',mae(as.numeric(f1$mean),johnson.test),
+           mse(as.numeric(f1$mean),johnson.test))
+a1[2,] <- c('Naive',mae(as.numeric(f2$mean),johnson.test),
+           mse(as.numeric(f2$mean),johnson.test))
+a1[3,] <- c('Drift',mae(as.numeric(f3$mean),johnson.test),
+           mse(as.numeric(f3$mean),johnson.test))
+a1[4,] <- c('ARIMA',mae(as.numeric(pred1$mean),johnson.test),
+           mse(as.numeric(pred1$mean),johnson.test))
+a1 %>% 
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
+detach(package:Metrics)
+```
+
+
+## Pfizer
+
+### 1 & 2
+#### Original ACF Plot 
+```{r}
+pfizer.ts <- ts_ts(ts_long(pfizer[,c(1,5)]))
+pfizer.ts<-na.remove(pfizer.ts)
+acf(pfizer.ts)
+```
+#### b ADF Test
+```{r}
+adf.test(pfizer.ts)
+```
+### 3
+#### a Detrend Data
+```{r}
+pfizer.df<-diff(pfizer.ts)
+```
+
+#### b Plot the differenced data and comment.
+```{r}
+fig2 <- autoplot(pfizer.ts) + 
+  autolayer(pfizer.df,series = 'Difference')
+fig2 <- fig2 +labs(title = "Pfizer Origin and Difference",
+                   x='Date',y='Value')
+fig2
+```
+
+#### c ADF Test
+```{r}
+acf(pfizer.df)
+adf.test(pfizer.df)
+```
+
+### 4
+#### Plot the ACF and PACF plots 
+```{r}
+par(mfrow=c(1,2))
+acf(pfizer.df)
+pacf(pfizer.df)
+```
+
+### 5
+#### check AIC and BIC
+
+```{r}
+fit1 <- Arima(pfizer.ts, order=c(1, 1, 1),include.drift = TRUE)
+fit2 <- Arima(pfizer.ts, order=c(1, 1, 3),include.drift = TRUE)
+r2 <- data.frame(matrix(ncol = 4, nrow = 0))
+colnames(r2) <- c('Model','AIC','BIC','AICC')
+r2[1,]<- c('ARIMA(1,1,1)',fit1$aic,fit1$bic,fit1$aicc)
+r2[2,]<- c('ARIMA(1,1,3)',fit2$aic,fit2$bic,fit2$aicc)
+r2 %>% 
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
+```
+
+#### Train
+```{r}
+pfizer.train <- pfizer.ts[1:floor(length(pfizer.ts)*0.8)]
+pfizer.test <- pfizer.ts[(ceiling(length(pfizer.ts)*0.8)+1):length(pfizer.ts)]
+pfizer.ar <- arima(pfizer.train, order=c(1,1,3))
+summary(pfizer.ar)
+```
+$$  X_{t} =  0.1491X_{t-1}+0.8509X_{t-2}+w_{t}+0.7819w_{t-1}-0.0198w_{t-2}+0.0927w_{t-3}$$
+### 6
+#### full model diagnostics
+```{r}
+sarima(pfizer.train,1,1,1)
+```
+
+### 7 
+#### auto.arima
+```{r}
+auto.arima(pfizer.train)
+```
+
+### 8
+#### Forecast
+```{r}
+pred1 <- forecast(pfizer.ar,length(pfizer.test)+50)
+autoplot(pred1) 
+autoplot(pfizer.ts)
+```
+
+
+### 9 
+#### Benchmark
+```{r}
+f1 <- meanf(pfizer.train,length(pfizer.test)+50)
+accuracy(f1)
+checkresiduals(f1)
+
+f2 <- naive(pfizer.train,length(pfizer.test)+50)
+accuracy(f2)
+checkresiduals(f2)
+
+f3 <- rwf(pfizer.train,length(pfizer.test)+50)
+accuracy(f3)
+checkresiduals(f3)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(Metrics)
+a2 <- data.frame(matrix(ncol = 3, nrow = 0))
+colnames(a2) <- c('Method','MAE','MSE')
+a2[1,] <- c('Mean',mae(as.numeric(f1$mean),pfizer.test),
+           mse(as.numeric(f1$mean),pfizer.test))
+a2[2,] <- c('Naive',mae(as.numeric(f2$mean),pfizer.test),
+           mse(as.numeric(f2$mean),pfizer.test))
+a2[3,] <- c('Drift',mae(as.numeric(f3$mean),pfizer.test),
+           mse(as.numeric(f3$mean),pfizer.test))
+a2[4,] <- c('ARIMA',mae(as.numeric(pred1$mean),pfizer.test),
+           mse(as.numeric(pred1$mean),pfizer.test))
+a2 %>% 
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
+detach(package:Metrics)
+```
+
+## moderna
+
+### 1 & 2
+#### Original ACF Plot 
+```{r}
+moderna.ts <- ts_ts(ts_long(moderna[,c(1,5)]))
+moderna.ts<-na.remove(moderna.ts)
+acf(moderna.ts)
+```
+#### b ADF Test
+```{r}
+adf.test(moderna.ts)
+```
+### 3
+#### a Detrend Data
+```{r}
+moderna.df<-diff(moderna.ts)
+```
+
+#### b Plot the differenced data and comment.
+```{r}
+fig1 <- autoplot(moderna.ts,series = 'Origin') + 
+  autolayer(moderna.df,series = 'Difference')
+fig1 <- fig1 +labs(title = "moderna&moderna Origin and Difference",
+                   x='Date',y='Value')
+fig1
+```
+
+#### c ADF Test
+```{r}
+acf(moderna.df)
+adf.test(moderna.df)
+```
+
+### 4
+#### Plot the ACF and PACF plots 
+```{r}
+par(mfrow=c(1,2))
+acf(moderna.df)
+pacf(moderna.df)
+```
+
+### 5
+#### check AIC and BIC
+
+```{r}
+fit1 <- Arima(moderna.ts, order=c(2, 1, 2),include.drift = TRUE)
+fit2 <- Arima(moderna.ts, order=c(2, 1, 3),include.drift = TRUE)
+fit3 <- Arima(moderna.ts, order=c(3, 1, 2),include.drift = TRUE)
+fit4 <- Arima(moderna.ts, order=c(3, 1, 3),include.drift = TRUE)
+r3 <- data.frame(matrix(ncol = 4, nrow = 0))
+colnames(r3) <- c('Model','AIC','BIC','AICC')
+r3[1,]<- c('ARIMA(1,1,1)',fit1$aic,fit1$bic,fit1$aicc)
+r3[2,]<- c('ARIMA(1,1,3)',fit2$aic,fit2$bic,fit2$aicc)
+r3[3,]<- c('ARIMA(3,1,1)',fit3$aic,fit3$bic,fit3$aicc)
+r3[4,]<- c('ARIMA(3,1,3)',fit4$aic,fit4$bic,fit4$aicc)
+r3 %>% 
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
+```
+
+#### Train
+```{r}
+moderna.train <- moderna.ts[1:floor(length(moderna.ts)*0.8)]
+moderna.test <- moderna.ts[(ceiling(length(moderna.ts)*0.8)+1):length(moderna.ts)]
+moderna.ar <- arima(moderna.train, order=c(3,1,3))
+summary(moderna.ar)
+```
+$$  X_{t} = 1.6268X_{t-1}+0.1617X_{t-2}+1.3978X_{t-3}-0.1917X_{t-4}+w_{t}-0.6345w_{t-1}+1.303w_{t-2}-0.0905w_{t-3}$$
+### 6
+#### full model diagnostics
+```{r}
+sarima(moderna.train,1,1,1)
+```
+
+### 7 
+#### auto.arima
+```{r}
+auto.arima(moderna.train)
+```
+
+### 8
+#### Forecast
+```{r}
+pred1 <- forecast(moderna.ar,length(moderna.test)+50)
+autoplot(pred1) 
+autoplot(moderna.ts)
+```
+
+
+### 9 
+#### Benchmark
+```{r}
+f1 <- meanf(moderna.train,length(moderna.test)+50)
+accuracy(f1)
+checkresiduals(f1)
+
+f2 <- naive(moderna.train,length(moderna.test)+50)
+accuracy(f2)
+checkresiduals(f2)
+
+f3 <- rwf(moderna.train,length(moderna.test)+50)
+accuracy(f3)
+checkresiduals(f3)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(Metrics)
+a3 <- data.frame(matrix(ncol = 3, nrow = 0))
+colnames(a3) <- c('Method','MAE','MSE')
+a3[1,] <- c('Mean',mae(as.numeric(f1$mean),moderna.test),
+           mse(as.numeric(f1$mean),moderna.test))
+a3[2,] <- c('Naive',mae(as.numeric(f2$mean),moderna.test),
+           mse(as.numeric(f2$mean),moderna.test))
+a3[3,] <- c('Drift',mae(as.numeric(f3$mean),moderna.test),
+           mse(as.numeric(f3$mean),moderna.test))
+a3[4,] <- c('ARIMA',mae(as.numeric(pred1$mean),moderna.test),
+           mse(as.numeric(pred1$mean),moderna.test))
+a3 %>% 
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
+detach(package:Metrics)
+```
+
+### vaccine 1
+#### time series Plot
+```{r}
+vaccine.ts1 <- ts_ts(ts_long(vaccine[which(vaccine$vaccine=='Johnson&Johnson'),c(2,4)]))
+vaccine.ts1 <- na.remove(vaccine.ts1)
+acf(vaccine.ts1)
+```
+#### b ADF Test
+```{r}
+adf.test(vaccine.ts1)
+```
+### 3
+#### a Detrend Data
+```{r}
+v1.df<-diff(vaccine.ts1)
+```
+
+#### b Plot the differenced data and comment.
+```{r}
+fig1 <- autoplot(vaccine.ts1,series = 'Origin') + 
+  autolayer(v1.df,series = 'Difference')
+fig1 <- fig1 +labs(title = "v1&v1 Origin and Difference",
+                   x='Date',y='Value')
+fig1
+```
+
+#### c ADF Test
+```{r}
+acf(v1.df)
+adf.test(v1.df)
+```
+
+### 4
+#### Plot the ACF and PACF plots 
+```{r}
+par(mfrow=c(1,2))
+acf(v1.df)
+pacf(v1.df)
+```
+
+### 5
+#### check AIC and BIC
+
+```{r}
+fit1 <- Arima(vaccine.ts1, order=c(1, 1, 1),include.drift = TRUE)
+fit2 <- Arima(vaccine.ts1, order=c(1, 1, 4),include.drift = TRUE)
+fit3 <- Arima(vaccine.ts1, order=c(4, 1, 1),include.drift = TRUE)
+fit4 <- Arima(vaccine.ts1, order=c(4, 1, 4),include.drift = TRUE)
+r4 <- data.frame(matrix(ncol = 4, nrow = 0))
+colnames(r4) <- c('Model','AIC','BIC','AICC')
+r4[1,]<- c('ARIMA(1,1,1)',fit1$aic,fit1$bic,fit1$aicc)
+r4[2,]<- c('ARIMA(1,1,4)',fit2$aic,fit2$bic,fit2$aicc)
+r4[3,]<- c('ARIMA(4,1,1)',fit3$aic,fit3$bic,fit3$aicc)
+r4[4,]<- c('ARIMA(4,1,4)',fit4$aic,fit4$bic,fit4$aicc)
+r4 %>% 
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
+```
+
+#### Train
+```{r}
+v1.train <- vaccine.ts1[1:floor(length(vaccine.ts1)*0.8)]
+v1.test <- vaccine.ts1[(ceiling(length(vaccine.ts1)*0.8)+1):length(vaccine.ts1)]
+v1.ar <- arima(v1.train, order=c(1,1,4))
+summary(v1.ar)
+```
+$$  X_{t} =  1.9944X_{t-1}-0.9944X_{t-2}+w_{t}-1.5327w_{t-1}+0.1243w_{t-2}+0.4017w_{t-3}+0.0115w_{t-4}$$
+### 6
+#### full model diagnostics
+```{r}
+sarima(v1.test,1,1,4)
+```
+
+### 7 
+#### auto.arima
+```{r}
+auto.arima(v1.train)
+```
+
+### 8
+#### Forecast
+```{r}
+pred1 <- forecast(v1.ar,length(v1.test)+50)
+autoplot(pred1) 
+autoplot(vaccine.ts1)
+```
+
+
+### 9 
+#### Benchmark
+```{r}
+f1 <- meanf(v1.train,length(v1.test)+50)
+accuracy(f1)
+checkresiduals(f1)
+
+f2 <- naive(v1.train,length(v1.test)+50)
+accuracy(f2)
+checkresiduals(f2)
+
+f3 <- rwf(v1.train,length(v1.test)+50)
+accuracy(f3)
+checkresiduals(f3)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(Metrics)
+a4 <- data.frame(matrix(ncol = 3, nrow = 0))
+colnames(a1) <- c('Method','MAE','MSE')
+a4[1,] <- c('Mean',mae(as.numeric(f1$mean),v1.test),
+           mse(as.numeric(f1$mean),v1.test))
+a4[2,] <- c('Naive',mae(as.numeric(f2$mean),v1.test),
+           mse(as.numeric(f2$mean),v1.test))
+a4[3,] <- c('Drift',mae(as.numeric(f3$mean),v1.test),
+           mse(as.numeric(f3$mean),v1.test))
+a4[4,] <- c('ARIMA',mae(as.numeric(pred1$mean),v1.test),
+           mse(as.numeric(pred1$mean),v1.test))
+a4 %>% 
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
+detach(package:Metrics)
+```
+
+### vaccine 1
+#### time series Plot
+```{r}
+vaccine.ts2 <- ts_ts(ts_long(vaccine[which(vaccine$vaccine=='Pfizer/BioNTech'),c(2,4)]))
+vaccine.ts2 <- na.remove(vaccine.ts2)
+acf(vaccine.ts2)
+```
+#### b ADF Test
+```{r}
+adf.test(vaccine.ts2)
+```
+### 3
+#### a Detrend Data
+```{r}
+v2.df<-diff(vaccine.ts2)
+```
+
+#### b Plot the differenced data and comment.
+```{r}
+fig1 <- autoplot(vaccine.ts2,series = 'Origin') + 
+  autolayer(v2.df,series = 'Difference')
+fig1 <- fig1 +labs(title = "v2&v2 Origin and Difference",
+                   x='Date',y='Value')
+fig1
+```
+
+#### c ADF Test
+```{r}
+acf(v2.df)
+adf.test(v2.df)
+```
+
+### 4
+#### Plot the ACF and PACF plots 
+```{r}
+par(mfrow=c(1,2))
+acf(v2.df)
+pacf(v2.df)
+```
+
+### 5
+#### check AIC and BIC
+
+```{r}
+fit1 <- Arima(vaccine.ts2, order=c(1, 1, 1),include.drift = TRUE)
+fit2 <- Arima(vaccine.ts2, order=c(1, 1, 2),include.drift = TRUE)
+r5 <- data.frame(matrix(ncol = 4, nrow = 0))
+colnames(r5) <- c('Model','AIC','BIC','AICC')
+r5[1,]<- c('ARIMA(1,1,1)',fit1$aic,fit1$bic,fit1$aicc)
+r5[2,]<- c('ARIMA(1,1,2)',fit2$aic,fit2$bic,fit2$aicc)
+r5 %>% 
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
+```
+
+#### Train
+```{r}
+v2.train <- vaccine.ts2[1:floor(length(vaccine.ts2)*0.8)]
+v2.test <- vaccine.ts2[(ceiling(length(vaccine.ts2)*0.8)+1):length(vaccine.ts2)]
+v2.ar <- arima(v2.train, order=c(1,1,1))
+summary(v2.ar)
+```
+$$  X_{t} =  1.1402X_{t-1}-0.1402X_{t-2}+w_{t}-0.7740w_{t-1}$$
+### 6
+#### full model diagnostics
+```{r}
+sarima(v2.train,1,1,1)
+```
+
+### 7 
+#### auto.arima
+```{r}
+auto.arima(v2.train)
+```
+
+### 8
+#### Forecast
+```{r}
+pred1 <- forecast(v2.ar,length(v2.test)+50)
+autoplot(pred1) 
+autoplot(vaccine.ts2)
+```
+
+
+### 9 
+#### Benchmark
+```{r}
+f1 <- meanf(v2.train,length(v2.test)+50)
+accuracy(f1)
+checkresiduals(f1)
+
+f2 <- naive(v2.train,length(v2.test)+50)
+accuracy(f2)
+checkresiduals(f2)
+
+f3 <- rwf(v2.train,length(v2.test)+50)
+accuracy(f3)
+checkresiduals(f3)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(Metrics)
+a5 <- data.frame(matrix(ncol = 3, nrow = 0))
+colnames(a5) <- c('Method','MAE','MSE')
+a5[1,] <- c('Mean',mae(as.numeric(f1$mean),v2.test),
+           mse(as.numeric(f1$mean),v2.test))
+a5[2,] <- c('Naive',mae(as.numeric(f2$mean),v2.test),
+           mse(as.numeric(f2$mean),v2.test))
+a5[3,] <- c('Drift',mae(as.numeric(f3$mean),v2.test),
+           mse(as.numeric(f3$mean),v2.test))
+a5[4,] <- c('ARIMA',mae(as.numeric(pred1$mean),v2.test),
+           mse(as.numeric(pred1$mean),v2.test))
+a5 %>% 
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
+detach(package:Metrics)
+```
+### vaccine 3
+#### time series Plot
+```{r}
+vaccine.ts3 <- ts_ts(ts_long(vaccine[which(vaccine$vaccine=='Moderna'),c(2,4)]))
+vaccine.ts3 <- na.remove(vaccine.ts3)
+acf(vaccine.ts3)
+```
+#### b ADF Test
+```{r}
+adf.test(vaccine.ts3)
+```
+### 3
+#### a Detrend Data
+```{r}
+v3.df<-diff(vaccine.ts3)
+```
+
+#### b Plot the differenced data and comment.
+```{r}
+fig1 <- autoplot(vaccine.ts3,series = 'Origin') + 
+  autolayer(v3.df,series = 'Difference')
+fig1 <- fig1 +labs(title = "v3&v3 Origin and Difference",
+                   x='Date',y='Value')
+fig1
+```
+
+#### c ADF Test
+```{r}
+acf(v3.df)
+adf.test(v3.df)
+```
+
+### 4
+#### Plot the ACF and PACF plots 
+```{r}
+par(mfrow=c(1,2))
+acf(v3.df)
+pacf(v3.df)
+```
+
+### 5
+#### check AIC and BIC
+
+```{r}
+fit1 <- Arima(vaccine.ts3, order=c(1, 1, 1),include.drift = TRUE)
+fit2 <- Arima(vaccine.ts3, order=c(1, 1, 2),include.drift = TRUE)
+fit3 <- Arima(vaccine.ts3, order=c(4, 1, 1),include.drift = TRUE)
+fit4 <- Arima(vaccine.ts3, order=c(4, 1, 2),include.drift = TRUE)
+r6 <- data.frame(matrix(ncol = 4, nrow = 0))
+colnames(r6) <- c('Model','AIC','BIC','AICC')
+r6[1,]<- c('ARIMA(1,1,1)',fit1$aic,fit1$bic,fit1$aicc)
+r6[2,]<- c('ARIMA(1,1,2)',fit2$aic,fit2$bic,fit2$aicc)
+r6[3,]<- c('ARIMA(4,1,1)',fit1$aic,fit1$bic,fit1$aicc)
+r6[4,]<- c('ARIMA(4,1,2)',fit2$aic,fit2$bic,fit2$aicc)
+r6 %>% 
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
+```
+
+#### Train
+```{r}
+v3.train <- vaccine.ts3[1:floor(length(vaccine.ts3)*0.8)]
+v3.test <- vaccine.ts3[(ceiling(length(vaccine.ts3)*0.8)+1):length(vaccine.ts3)]
+v3.ar <- arima(v3.train, order=c(1,1,1))
+summary(v3.ar)
+```
+$$  X_{t} =  1.3443X_{t-1}-0.3443X_{t-2}+w_{t}-0.8576w_{t-1}$$
+### 6
+#### full model diagnostics
+```{r}
+sarima(v3.train,1,1,1)
+```
+
+### 7 
+#### auto.arima
+```{r}
+auto.arima(v3.train)
+```
+
+### 8
+#### Forecast
+```{r}
+pred1 <- forecast(v3.ar,length(v3.test)+50)
+autoplot(pred1) 
+autoplot(vaccine.ts3)
+```
+
+
+### 9 
+#### Benchmark
+```{r}
+f1 <- meanf(v3.train,length(v3.test)+50)
+accuracy(f1)
+checkresiduals(f1)
+
+f2 <- naive(v3.train,length(v3.test)+50)
+accuracy(f2)
+checkresiduals(f2)
+
+f3 <- rwf(v3.train,length(v3.test)+50)
+accuracy(f3)
+checkresiduals(f3)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(Metrics)
+a6 <- data.frame(matrix(ncol = 3, nrow = 0))
+colnames(a6) <- c('Method','MAE','MSE')
+a6[1,] <- c('Mean',mae(as.numeric(f1$mean),v3.test),
+           mse(as.numeric(f1$mean),v3.test))
+a6[2,] <- c('Naive',mae(as.numeric(f2$mean),v3.test),
+           mse(as.numeric(f2$mean),v3.test))
+a6[3,] <- c('Drift',mae(as.numeric(f3$mean),v3.test),
+           mse(as.numeric(f3$mean),v3.test))
+a6[4,] <- c('ARIMA',mae(as.numeric(pred1$mean),v3.test),
+           mse(as.numeric(pred1$mean),v3.test))
+a6 %>% 
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
+detach(package:Metrics)
+```
+
+

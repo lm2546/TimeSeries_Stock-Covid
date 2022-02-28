@@ -1,0 +1,708 @@
+---
+title: "Exploratory Data Analysis"
+author: "Lin Meng"
+date: "2022/2/7"
+output: html_document
+---
+
+```{r}
+library(ggfortify)
+library(ggplot2)
+library(fpp)
+library(stats)
+library(tsbox)
+library(gridExtra)
+```
+
+## Load Data
+```{r}
+covid <- read.csv("data/covid.csv")
+johnson <- read.csv("data/Johnson.csv ")
+moderna <- read.csv("data/Moderna.csv ")
+pfizer <- read.csv("data/Pfizer.csv ")
+stock <- read.csv("data/stock.csv")
+vaccine <- read.csv("data/vaccine.csv")
+```
+
+
+## EDA
+
+### johnson 
+
+#### time series Plot
+```{r}
+johnson.ts <- ts_ts(ts_long(johnson[,c(1,5)]))
+johnson.ts<-na.remove(johnson.ts)
+fig1<-autoplot(johnson.ts,colour='#029386') + labs(x="Date", y="Closed", title="Stock Closed Value By Date")
+fig1
+```
+
+
+#### Lag Plot
+```{r}
+gglagplot(johnson.ts, do.lines=FALSE,set.lags=1:9)
+```
+
+#### Decompose 
+```{r}
+decompose_johnson <- decompose(johnson.ts,'additive')
+plot(decompose_johnson)
+```
+
+```{r}
+decompose_johnson2 <- decompose(johnson.ts,'multiplicative')
+plot(decompose_johnson2)
+```
+
+#### ACF&PACF
+```{r}
+par(mfrow=c(1,2))
+par(mfrow=c(1,2))
+acf(johnson.ts)
+pacf(johnson.ts)
+```
+
+#### adf.test
+```{r}
+adf.test(johnson.ts)
+```
+#### Detrend Data
+```{r}
+johnson.df<-diff(log(johnson.ts))
+adf.test(johnson.df)
+```
+
+```{r}
+par(mfrow=c(1,2))
+acf(johnson.ts)
+acf(johnson.df)
+```
+
+#### Moving Average
+windows 3
+```{r}
+ma3 <- autoplot(johnson.ts, series="Data") +
+  autolayer(na.remove(ma(johnson.ts,3)), series="3-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Johnson&Johnson Moving Average Smoothing 3") +
+  scale_colour_manual(values=c("Data"="grey50","3-MA"="red"),
+  breaks=c("Data","3-MA"))+ theme_bw()
+ma3
+```
+windows 10
+```{r}
+ma10 <- autoplot(johnson.ts, series="Data") +
+  autolayer(na.remove(ma(johnson.ts,10)), series="10-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Johnson&Johnson Moving Average Smoothing 10") +
+  scale_colour_manual(values=c("Data"="grey50","10-MA"='blue'),
+  breaks=c("Data","10-MA"))+ theme_bw()
+ma3
+```
+windows 20
+```{r}
+ma20 <- autoplot(johnson.ts, series="Data") +
+  autolayer(na.remove(ma(johnson.ts,20)), series="20-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Johnson&Johnson Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="#acaaa6","20-MA"='purple'),
+  breaks=c("Data","20-MA"))+ theme_bw()
+ma20
+```
+
+### Moderna 
+#### time series Plot
+```{r}
+moderna.ts <- ts_ts(ts_long(moderna[,c(1,5)]))
+moderna.ts<-na.remove(moderna.ts)
+fig2<-autoplot(moderna.ts,colour='#ff796c') + labs(x="Date", y="Closed", title="Stock Closed Value By Date")
+fig2
+```
+
+#### Lag Plot
+```{r}
+gglagplot(moderna.ts, do.lines=FALSE,set.lags=1:9)
+```
+
+#### Decompose 
+```{r}
+decompose_moderna <- decompose(moderna.ts,'additive')
+plot(decompose_moderna)
+```
+
+```{r}
+decompose_moderna2 <- decompose(moderna.ts,'multiplicative')
+plot(decompose_moderna2)
+```
+
+#### ACF&PACF
+```{r}
+par(mfrow=c(1,2))
+acf(moderna.ts)
+pacf(moderna.ts)
+```
+
+#### adf.test
+```{r}
+adf.test(moderna.ts)
+```
+
+#### Detrend Data
+```{r}
+moderna.df<-diff(log(moderna.ts))
+adf.test(moderna.df)
+```
+
+```{r}
+par(mfrow=c(1,2))
+acf(moderna.ts)
+acf(moderna.df)
+```
+#### Moving Average
+windows 3
+```{r}
+ma3 <- autoplot(moderna.ts, series="Data") +
+  autolayer(na.remove(ma(moderna.ts,3)), series="3-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Moderna Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="grey50","3-MA"="red"),
+  breaks=c("Data","3-MA"))+ theme_bw()
+ma3
+```
+windows 10
+```{r}
+ma10 <- autoplot(moderna.ts, series="Data") +
+  autolayer(na.remove(ma(moderna.ts,10)), series="10-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Moderna Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="grey50","10-MA"='blue'),
+  breaks=c("Data","10-MA"))+ theme_bw()
+ma20
+```
+windows 20
+```{r}
+ma20 <- autoplot(moderna.ts, series="Data") +
+  autolayer(na.remove(ma(moderna.ts,20)), series="20-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Moderna Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="#acaaa6","20-MA"='purple'),
+  breaks=c("Data","20-MA"))+ theme_bw()
+ma20
+```
+
+### pfizer 
+#### time series Plot
+```{r}
+pfizer.ts <- ts_ts(ts_long(pfizer[,c(1,5)]))
+pfizer.ts<-na.remove(pfizer.ts)
+fig2<-autoplot(pfizer.ts,colour='#e6daa6') + labs(x="Date", y="Closed", title="Stock Closed Value By Date")
+fig2
+```
+
+#### Lag Plot
+```{r}
+gglagplot(pfizer.ts, do.lines=FALSE,set.lags=1:9)
+```
+
+
+#### Decompose 
+```{r}
+decompose_pfizer <- decompose(pfizer.ts,'additive')
+plot(decompose_pfizer)
+```
+
+```{r}
+decompose_pfizer2 <- decompose(pfizer.ts,'multiplicative')
+plot(decompose_pfizer2)
+```
+
+#### ACF&PACF
+```{r}
+par(mfrow=c(1,2))
+acf(pfizer.ts)
+pacf(pfizer.ts)
+```
+
+#### adf.test
+```{r}
+adf.test(pfizer.ts)
+```
+
+#### Detrend Data
+```{r}
+pfizer.df<-diff(log(pfizer.ts))
+adf.test(pfizer.df)
+```
+
+```{r}
+par(mfrow=c(1,2))
+acf(pfizer.ts)
+acf(pfizer.df)
+```
+#### Moving Average
+windows 3
+```{r}
+ma3 <- autoplot(pfizer.ts, series="Data") +
+  autolayer(na.remove(ma(pfizer.ts,3)), series="3-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Pfizer Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="grey50","3-MA"="red"),
+  breaks=c("Data","3-MA"))+ theme_bw()
+ma3
+```
+windows 10
+```{r}
+ma10 <- autoplot(pfizer.ts, series="Data") +
+  autolayer(na.remove(ma(pfizer.ts,10)), series="10-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Pfizer Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="grey50","10-MA"='blue'),
+  breaks=c("Data","10-MA"))+ theme_bw()
+ma20
+```
+windows 20
+```{r}
+ma20 <- autoplot(pfizer.ts, series="Data") +
+  autolayer(na.remove(ma(pfizer.ts,20)), series="20-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Pfizer Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="#acaaa6","20-MA"='purple'),
+  breaks=c("Data","20-MA"))+ theme_bw()
+ma20
+```
+
+### stock 
+#### time series Plot
+```{r}
+stock.ts <- ts_ts(ts_long(stock[,c(2,5)]))
+stock.ts<-na.remove(stock.ts)
+fig2<-autoplot(stock.ts,colour='#703be7') + labs(x="Date", y="Closed", title="Stock Closed Value By Date")
+fig2
+```
+
+#### Lag Plot
+```{r}
+gglagplot(stock.ts, do.lines=FALSE,set.lags=1:9)
+```
+
+
+#### Decompose 
+```{r}
+decompose_stock <- decompose(stock.ts,'additive')
+plot(decompose_stock)
+```
+
+```{r}
+decompose_stock2 <- decompose(stock.ts,'multiplicative')
+plot(decompose_stock2)
+```
+
+#### ACF&PACF
+```{r}
+par(mfrow=c(1,2))
+acf(stock.ts)
+pacf(stock.ts)
+```
+
+#### adf.test
+```{r}
+adf.test(stock.ts)
+```
+
+#### Detrend Data
+```{r}
+stock.df<-diff(log(stock.ts))
+adf.test(stock.df)
+```
+
+```{r}
+par(mfrow=c(1,2))
+acf(stock.ts)
+acf(stock.df)
+```
+
+#### Moving Average
+windows 3
+```{r}
+ma3 <- autoplot(stock.ts, series="Data") +
+  autolayer(na.remove(ma(stock.ts,3)), series="3-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Stock Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="grey50","3-MA"="red"),
+  breaks=c("Data","3-MA"))+ theme_bw()
+ma3
+```
+windows 10
+```{r}
+ma10 <- autoplot(stock.ts, series="Data") +
+  autolayer(na.remove(ma(stock.ts,10)), series="10-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Stock Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="grey50","10-MA"='blue'),
+  breaks=c("Data","10-MA"))+ theme_bw()
+ma20
+```
+windows 20
+```{r}
+ma20 <- autoplot(stock.ts, series="Data") +
+  autolayer(na.remove(ma(stock.ts,20)), series="20-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Stock Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="#acaaa6","20-MA"='purple'),
+  breaks=c("Data","20-MA"))+ theme_bw()
+ma20
+```
+
+### covid 1 
+#### time series Plot
+```{r}
+covid.ts1 <- ts_ts(ts_long(covid[,c(1,3)]))
+covid.ts1<-na.remove(covid.ts1)
+fig2<-autoplot(covid.ts1,colour='#0652ff') + labs(x="Date", y="New Cases", title="covid Closed Value By Date")
+fig2
+```
+
+#### Lag Plot
+```{r}
+gglagplot(covid.ts1, do.lines=FALSE,set.lags=1:9)
+```
+
+
+#### ACF&PACF
+```{r}
+par(mfrow=c(1,2))
+acf(covid.ts1)
+pacf(covid.ts1)
+```
+
+#### adf.test
+```{r}
+adf.test(covid.ts1)
+```
+
+#### Detrend Data
+```{r}
+covid.df1<-diff(covid.ts1)
+adf.test(covid.df1)
+```
+
+```{r}
+par(mfrow=c(1,2))
+acf(covid.ts1)
+acf(covid.df1)
+```
+
+#### Moving Average
+windows 3
+```{r}
+ma3 <- autoplot(covid.ts1, series="Data") +
+  autolayer(na.remove(ma(covid.ts1,3)), series="3-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Covid New Caeses Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="grey50","3-MA"="red"),
+  breaks=c("Data","3-MA"))+ theme_bw()
+ma3
+```
+windows 10
+```{r}
+ma10 <- autoplot(covid.ts1, series="Data") +
+  autolayer(na.remove(ma(covid.ts1,10)), series="10-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Covid New Caeses Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="grey50","10-MA"='blue'),
+  breaks=c("Data","10-MA"))+ theme_bw()
+ma20
+```
+windows 20
+```{r}
+ma20 <- autoplot(covid.ts1, series="Data") +
+  autolayer(na.remove(ma(covid.ts1,20)), series="20-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Covid New Caeses Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="#acaaa6","20-MA"='purple'),
+  breaks=c("Data","20-MA"))+ theme_bw()
+ma20
+```
+
+### covid 2
+#### time series Plot
+```{r}
+covid.ts2 <- ts_ts(ts_long(covid[,c(1,4)]))
+covid.ts2<-na.remove(covid.ts2)
+fig2<-autoplot(covid.ts2,colour='#ffa756') + labs(x="Date", y="New Cases", title="covid Closed Value By Date")
+fig2
+```
+
+#### Lag Plot
+```{r}
+gglagplot(covid.ts2, do.lines=FALSE,set.lags=1:9)
+```
+
+#### ACF&PACF
+```{r}
+par(mfrow=c(1,2))
+acf(covid.ts2)
+pacf(covid.ts2)
+```
+
+#### adf.test
+```{r}
+adf.test(covid.ts2)
+```
+
+#### Detrend Data
+```{r}
+covid.df2<-diff(covid.ts2)
+adf.test(covid.df2)
+```
+
+```{r}
+par(mfrow=c(1,2))
+acf(covid.ts2)
+acf(covid.df2)
+```
+
+#### Moving Average
+windows 3
+```{r}
+ma3 <- autoplot(covid.ts2, series="Data") +
+  autolayer(na.remove(ma(covid.ts2,3)), series="3-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Covid Deaths Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="grey50","3-MA"="red"),
+  breaks=c("Data","3-MA"))+ theme_bw()
+ma3
+```
+windows 10
+```{r}
+ma10 <- autoplot(covid.ts2, series="Data") +
+  autolayer(na.remove(ma(covid.ts2,10)), series="10-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Covid Deaths Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="grey50","10-MA"='blue'),
+  breaks=c("Data","10-MA"))+ theme_bw()
+ma20
+```
+windows 20
+```{r}
+ma20 <- autoplot(covid.ts2, series="Data") +
+  autolayer(na.remove(ma(covid.ts2,20)), series="20-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Covid Deaths Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="#acaaa6","20-MA"='purple'),
+  breaks=c("Data","20-MA"))+ theme_bw()
+ma20
+```
+
+### vaccine 1
+#### time series Plot
+```{r}
+vaccine.ts1 <- ts_ts(ts_long(vaccine[which(vaccine$vaccine=='Moderna'),c(2,4)]))
+vaccine.ts1<-na.remove(vaccine.ts1)
+fig2<-autoplot(vaccine.ts1,colour='#cb0162') + labs(x="Date", y="New Cases", title="vaccine Closed Value By Date")
+fig2
+```
+
+#### Lag Plot
+```{r}
+gglagplot(vaccine.ts1, do.lines=FALSE,set.lags=1:9)
+```
+
+#### ACF&PACF
+```{r}
+par(mfrow=c(1,2))
+acf(vaccine.ts1)
+pacf(vaccine.ts1)
+```
+
+#### adf.test
+```{r}
+adf.test(vaccine.ts1)
+```
+
+#### Detrend Data
+```{r}
+vaccine.df1<-diff(vaccine.ts1)
+adf.test(vaccine.df1)
+```
+
+```{r}
+par(mfrow=c(1,2))
+acf(vaccine.ts1)
+acf(vaccine.df1)
+```
+
+#### Moving Average
+windows 3
+```{r}
+ma3 <- autoplot(vaccine.ts1, series="Data") +
+  autolayer(na.remove(ma(vaccine.ts1,3)), series="3-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Moderna Vaccine Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="grey50","3-MA"="red"),
+  breaks=c("Data","3-MA"))+ theme_bw()
+ma3
+```
+windows 10
+```{r}
+ma10 <- autoplot(vaccine.ts1, series="Data") +
+  autolayer(na.remove(ma(vaccine.ts1,10)), series="10-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Moderna Vaccine Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="grey50","10-MA"='blue'),
+  breaks=c("Data","10-MA"))+ theme_bw()
+ma20
+```
+windows 20
+```{r}
+ma20 <- autoplot(vaccine.ts1, series="Data") +
+  autolayer(na.remove(ma(vaccine.ts1,20)), series="20-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Moderna Vaccine Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="#acaaa6","20-MA"='purple'),
+  breaks=c("Data","20-MA"))+ theme_bw()
+ma20
+```
+
+### vaccine 2
+#### time series Plot
+```{r}
+vaccine.ts2 <- ts_ts(ts_long(vaccine[which(vaccine$vaccine=='Johnson&Johnson'),c(2,4)]))
+vaccine.ts2<-na.remove(vaccine.ts2)
+fig2<-autoplot(vaccine.ts2,colour='#b00149') + labs(x="Date", y="New Cases", title="vaccine Closed Value By Date")
+fig2
+```
+
+#### Lag Plot
+```{r}
+gglagplot(vaccine.ts2, do.lines=FALSE,set.lags=1:9)
+```
+
+
+
+#### ACF&PACF
+```{r}
+par(mfrow=c(1,2))
+acf(vaccine.ts2)
+pacf(vaccine.ts2)
+```
+
+#### adf.test
+```{r}
+adf.test(vaccine.ts2)
+```
+
+#### Detrend Data
+```{r}
+vaccine.df2<-diff(vaccine.ts2)
+adf.test(vaccine.df2)
+```
+
+```{r}
+par(mfrow=c(1,2))
+acf(vaccine.ts2)
+acf(vaccine.df2)
+```
+
+#### Moving Average
+windows 3
+```{r}
+ma3 <- autoplot(vaccine.ts2, series="Data") +
+  autolayer(na.remove(ma(vaccine.ts2,3)), series="3-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Johnson&Johnson Vaccine Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="grey50","3-MA"="red"),
+  breaks=c("Data","3-MA"))+ theme_bw()
+ma3
+```
+windows 10
+```{r}
+ma10 <- autoplot(vaccine.ts2, series="Data") +
+  autolayer(na.remove(ma(vaccine.ts2,10)), series="10-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Johnson&Johnson Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="grey50","10-MA"='blue'),
+  breaks=c("Data","10-MA"))+ theme_bw()
+ma20
+```
+windows 20
+```{r}
+ma20 <- autoplot(vaccine.ts2, series="Data") +
+  autolayer(na.remove(ma(vaccine.ts2,20)), series="20-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Johnson&Johnson Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="#acaaa6","20-MA"='purple'),
+  breaks=c("Data","20-MA"))+ theme_bw()
+ma20
+```
+
+### vaccine 3
+#### time series Plot
+```{r}
+vaccine.ts3 <- ts_ts(ts_long(vaccine[which(vaccine$vaccine=='Pfizer/BioNTech'),c(2,4)]))
+vaccine.ts3<-na.remove(vaccine.ts3)
+fig2<-autoplot(vaccine.ts3,colour='#b66a50') + labs(x="Date", y="New Cases", title="vaccine Closed Value By Date")
+fig2
+```
+
+#### Lag Plot
+```{r}
+gglagplot(vaccine.ts3, do.lines=FALSE,set.lags=1:9)
+```
+
+
+#### ACF&PACF
+```{r}
+par(mfrow=c(1,2))
+acf(vaccine.ts3)
+pacf(vaccine.ts3)
+```
+
+#### adf.test
+```{r}
+adf.test(vaccine.ts3)
+```
+
+#### Detrend Data
+```{r}
+vaccine.df3<-diff(vaccine.ts3)
+adf.test(vaccine.df3)
+```
+
+```{r}
+par(mfrow=c(1,2))
+acf(vaccine.ts3)
+acf(vaccine.df3)
+```
+
+#### Moving Average
+windows 3
+```{r}
+ma3 <- autoplot(vaccine.ts3, series="Data") +
+  autolayer(na.remove(ma(vaccine.ts3,3)), series="3-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Pfizer vaccine Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="grey50","3-MA"="red"),
+  breaks=c("Data","3-MA"))+ theme_bw()
+ma3
+```
+windows 10
+```{r}
+ma10 <- autoplot(vaccine.ts3, series="Data") +
+  autolayer(na.remove(ma(vaccine.ts3,10)), series="10-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Pfizer vaccine Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="grey50","10-MA"='blue'),
+  breaks=c("Data","10-MA"))+ theme_bw()
+ma20
+```
+windows 20
+```{r}
+ma20 <- autoplot(vaccine.ts3, series="Data") +
+  autolayer(na.remove(ma(vaccine.ts3,20)), series="20-MA") +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Pfizer vaccine Moving Average Smoothing 20") +
+  scale_colour_manual(values=c("Data"="#acaaa6","20-MA"='purple'),
+  breaks=c("Data","20-MA"))+ theme_bw()
+ma20
+```
