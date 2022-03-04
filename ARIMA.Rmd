@@ -39,6 +39,11 @@ acf(johnson.ts)
 ```{r}
 adf.test(johnson.ts)
 ```
+```{r}
+acf(log(johnson.ts))
+adf.test(log(johnson.ts))
+```
+
 ### 3
 #### a Detrend Data
 ```{r}
@@ -149,7 +154,16 @@ a1 %>%
   kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
 detach(package:Metrics)
 ```
-
+```{r}
+fit2 <- Arima(johnson.ts,order=c(1,1,3),include.drift=TRUE)
+autoplot(johnson.ts,series='Data') +
+  autolayer(meanf(johnson.ts,150),PI=FALSE,series='Mean') +
+  autolayer(naive(johnson.ts,150),PI=FALSE,series='Naive') +
+  autolayer(rwf(johnson.ts,150),PI=FALSE,series='Drift') +
+  autolayer(forecast(fit2,150),PI=FALSE, series='AR') +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Johnson&Johnson Benchmark Stock Forecast")
+```
 
 ## Pfizer
 
@@ -164,6 +178,12 @@ acf(pfizer.ts)
 ```{r}
 adf.test(pfizer.ts)
 ```
+```{r}
+acf(log(pfizer.ts))
+adf.test(log(pfizer.ts))
+```
+
+
 ### 3
 #### a Detrend Data
 ```{r}
@@ -271,6 +291,18 @@ a2 %>%
 detach(package:Metrics)
 ```
 
+```{r}
+fit2 <- Arima(pfizer.ts,order=c(1,1,3),include.drift=TRUE)
+autoplot(pfizer.ts,series='Data') +
+  autolayer(meanf(pfizer.ts,150),PI=FALSE,series='Mean') +
+  autolayer(naive(pfizer.ts,150),PI=FALSE,series='Naive') +
+  autolayer(rwf(pfizer.ts,150),PI=FALSE,series='Drift') +
+  autolayer(forecast(fit2,150),PI=FALSE, series='AR') +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Pfizer Benchmark Stock Forecast")
+```
+
+
 ## moderna
 
 ### 1 & 2
@@ -280,10 +312,17 @@ moderna.ts <- ts_ts(ts_long(moderna[,c(1,5)]))
 moderna.ts<-na.remove(moderna.ts)
 acf(moderna.ts)
 ```
+
+
 #### b ADF Test
 ```{r}
 adf.test(moderna.ts)
 ```
+```{r}
+acf(log(moderna.ts))
+adf.test(log(moderna.ts))
+```
+
 ### 3
 #### a Detrend Data
 ```{r}
@@ -294,7 +333,7 @@ moderna.df<-diff(moderna.ts)
 ```{r}
 fig1 <- autoplot(moderna.ts,series = 'Origin') + 
   autolayer(moderna.df,series = 'Difference')
-fig1 <- fig1 +labs(title = "moderna&moderna Origin and Difference",
+fig1 <- fig1 +labs(title = "Moderna Origin and Difference",
                    x='Date',y='Value')
 fig1
 ```
@@ -395,6 +434,17 @@ a3 %>%
 detach(package:Metrics)
 ```
 
+```{r}
+fit2 <- Arima(moderna.ts,order=c(1,1,3),include.drift=TRUE)
+autoplot(moderna.ts,series='Data') +
+  autolayer(meanf(moderna.ts,150),PI=FALSE,series='Mean') +
+  autolayer(naive(moderna.ts,150),PI=FALSE,series='Naive') +
+  autolayer(rwf(moderna.ts,150),PI=FALSE,series='Drift') +
+  autolayer(forecast(fit2,150),PI=FALSE, series='AR') +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Moderna Benchmark Stock Forecast")
+```
+
 ### vaccine 1
 #### time series Plot
 ```{r}
@@ -406,6 +456,12 @@ acf(vaccine.ts1)
 ```{r}
 adf.test(vaccine.ts1)
 ```
+
+```{r}
+acf(log(vaccine.ts1))
+adf.test(log(vaccine.ts1))
+```
+
 ### 3
 #### a Detrend Data
 ```{r}
@@ -416,7 +472,7 @@ v1.df<-diff(vaccine.ts1)
 ```{r}
 fig1 <- autoplot(vaccine.ts1,series = 'Origin') + 
   autolayer(v1.df,series = 'Difference')
-fig1 <- fig1 +labs(title = "v1&v1 Origin and Difference",
+fig1 <- fig1 +labs(title = "Johnson&Johnson Origin and Difference",
                    x='Date',y='Value')
 fig1
 ```
@@ -440,15 +496,15 @@ pacf(v1.df)
 
 ```{r}
 fit1 <- Arima(vaccine.ts1, order=c(1, 1, 1),include.drift = TRUE)
-fit2 <- Arima(vaccine.ts1, order=c(1, 1, 4),include.drift = TRUE)
+fit2 <- Arima(vaccine.ts1, order=c(1, 1, 2),include.drift = TRUE)
 fit3 <- Arima(vaccine.ts1, order=c(4, 1, 1),include.drift = TRUE)
-fit4 <- Arima(vaccine.ts1, order=c(4, 1, 4),include.drift = TRUE)
+fit4 <- Arima(vaccine.ts1, order=c(4, 1, 2),include.drift = TRUE)
 r4 <- data.frame(matrix(ncol = 4, nrow = 0))
 colnames(r4) <- c('Model','AIC','BIC','AICC')
 r4[1,]<- c('ARIMA(1,1,1)',fit1$aic,fit1$bic,fit1$aicc)
-r4[2,]<- c('ARIMA(1,1,4)',fit2$aic,fit2$bic,fit2$aicc)
+r4[2,]<- c('ARIMA(1,1,2)',fit2$aic,fit2$bic,fit2$aicc)
 r4[3,]<- c('ARIMA(4,1,1)',fit3$aic,fit3$bic,fit3$aicc)
-r4[4,]<- c('ARIMA(4,1,4)',fit4$aic,fit4$bic,fit4$aicc)
+r4[4,]<- c('ARIMA(4,1,2)',fit4$aic,fit4$bic,fit4$aicc)
 r4 %>% 
   kbl() %>%
   kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
@@ -458,14 +514,14 @@ r4 %>%
 ```{r}
 v1.train <- vaccine.ts1[1:floor(length(vaccine.ts1)*0.8)]
 v1.test <- vaccine.ts1[(ceiling(length(vaccine.ts1)*0.8)+1):length(vaccine.ts1)]
-v1.ar <- arima(v1.train, order=c(1,1,4))
+v1.ar <- arima(v1.train, order=c(1,1,2))
 summary(v1.ar)
 ```
-$$  X_{t} =  1.9944X_{t-1}-0.9944X_{t-2}+w_{t}-1.5327w_{t-1}+0.1243w_{t-2}+0.4017w_{t-3}+0.0115w_{t-4}$$
+$$  X_{t} =  0.4363X_{t-1}+0.6637X_{t-2}+w_{t}+0.1159w_{t-1}-0.6856w_{t-2}$$
 ### 6
 #### full model diagnostics
 ```{r}
-sarima(v1.test,1,1,4)
+sarima(v1.test,1,1,2)
 ```
 
 ### 7 
@@ -517,7 +573,18 @@ a4 %>%
 detach(package:Metrics)
 ```
 
-### vaccine 1
+```{r}
+fit2 <- Arima(vaccine.ts1,order=c(1,1,3),include.drift=TRUE)
+autoplot(vaccine.ts1,series='Data') +
+  autolayer(meanf(vaccine.ts1,150),PI=FALSE,series='Mean') +
+  autolayer(naive(vaccine.ts1,150),PI=FALSE,series='Naive') +
+  autolayer(rwf(vaccine.ts1,150),PI=FALSE,series='Drift') +
+  autolayer(forecast(fit2,150),PI=FALSE, series='AR') +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Johnson&Johnson Benchmark Vaccine Forecast")
+```
+
+### vaccine 2
 #### time series Plot
 ```{r}
 vaccine.ts2 <- ts_ts(ts_long(vaccine[which(vaccine$vaccine=='Pfizer/BioNTech'),c(2,4)]))
@@ -528,6 +595,11 @@ acf(vaccine.ts2)
 ```{r}
 adf.test(vaccine.ts2)
 ```
+```{r}
+acf(log(vaccine.ts2))
+adf.test(log(vaccine.ts2))
+```
+
 ### 3
 #### a Detrend Data
 ```{r}
@@ -538,7 +610,7 @@ v2.df<-diff(vaccine.ts2)
 ```{r}
 fig1 <- autoplot(vaccine.ts2,series = 'Origin') + 
   autolayer(v2.df,series = 'Difference')
-fig1 <- fig1 +labs(title = "v2&v2 Origin and Difference",
+fig1 <- fig1 +labs(title = "Pfizer Vaccine and Difference",
                    x='Date',y='Value')
 fig1
 ```
@@ -634,6 +706,18 @@ a5 %>%
   kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
 detach(package:Metrics)
 ```
+
+```{r}
+fit2 <- Arima(vaccine.ts2,order=c(1,1,3),include.drift=TRUE)
+autoplot(vaccine.ts2,series='Data') +
+  autolayer(meanf(vaccine.ts2,150),PI=FALSE,series='Mean') +
+  autolayer(naive(vaccine.ts2,150),PI=FALSE,series='Naive') +
+  autolayer(rwf(vaccine.ts2,150),PI=FALSE,series='Drift') +
+  autolayer(forecast(fit2,150),PI=FALSE, series='AR') +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Pfizer Benchmark Vaccine Forecast")
+```
+
 ### vaccine 3
 #### time series Plot
 ```{r}
@@ -655,7 +739,7 @@ v3.df<-diff(vaccine.ts3)
 ```{r}
 fig1 <- autoplot(vaccine.ts3,series = 'Origin') + 
   autolayer(v3.df,series = 'Difference')
-fig1 <- fig1 +labs(title = "v3&v3 Origin and Difference",
+fig1 <- fig1 +labs(title = "Moderna Origin and Difference",
                    x='Date',y='Value')
 fig1
 ```
@@ -756,4 +840,13 @@ a6 %>%
 detach(package:Metrics)
 ```
 
-
+```{r}
+fit2 <- Arima(vaccine.ts3,order=c(1,1,3),include.drift=TRUE)
+autoplot(vaccine.ts3,series='Data') +
+  autolayer(meanf(vaccine.ts3,150),PI=FALSE,series='Mean') +
+  autolayer(naive(vaccine.ts3,150),PI=FALSE,series='Naive') +
+  autolayer(rwf(vaccine.ts3,150),PI=FALSE,series='Drift') +
+  autolayer(forecast(fit2,150),PI=FALSE, series='AR') +
+  xlab("Date") + ylab("Value") +
+  ggtitle("Moderna Benchmark Vaccine Forecast")
+```

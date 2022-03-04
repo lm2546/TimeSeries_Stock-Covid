@@ -5,7 +5,7 @@ date: "2022/2/7"
 output: html_document
 ---
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 library(ggfortify)
 library(ggplot2)
 library(fpp)
@@ -97,7 +97,7 @@ ma10 <- autoplot(johnson.ts, series="Data") +
   ggtitle("Johnson&Johnson Moving Average Smoothing 10") +
   scale_colour_manual(values=c("Data"="grey50","10-MA"='blue'),
   breaks=c("Data","10-MA"))+ theme_bw()
-ma3
+ma10
 ```
 windows 20
 ```{r}
@@ -177,7 +177,7 @@ ma10 <- autoplot(moderna.ts, series="Data") +
   ggtitle("Moderna Moving Average Smoothing 20") +
   scale_colour_manual(values=c("Data"="grey50","10-MA"='blue'),
   breaks=c("Data","10-MA"))+ theme_bw()
-ma20
+ma10
 ```
 windows 20
 ```{r}
@@ -258,7 +258,7 @@ ma10 <- autoplot(pfizer.ts, series="Data") +
   ggtitle("Pfizer Moving Average Smoothing 20") +
   scale_colour_manual(values=c("Data"="grey50","10-MA"='blue'),
   breaks=c("Data","10-MA"))+ theme_bw()
-ma20
+ma10
 ```
 windows 20
 ```{r}
@@ -340,7 +340,7 @@ ma10 <- autoplot(stock.ts, series="Data") +
   ggtitle("Stock Moving Average Smoothing 20") +
   scale_colour_manual(values=c("Data"="grey50","10-MA"='blue'),
   breaks=c("Data","10-MA"))+ theme_bw()
-ma20
+ma10
 ```
 windows 20
 ```{r}
@@ -411,7 +411,7 @@ ma10 <- autoplot(covid.ts1, series="Data") +
   ggtitle("Covid New Caeses Moving Average Smoothing 20") +
   scale_colour_manual(values=c("Data"="grey50","10-MA"='blue'),
   breaks=c("Data","10-MA"))+ theme_bw()
-ma20
+ma10
 ```
 windows 20
 ```{r}
@@ -429,7 +429,7 @@ ma20
 ```{r}
 covid.ts2 <- ts_ts(ts_long(covid[,c(1,4)]))
 covid.ts2<-na.remove(covid.ts2)
-fig2<-autoplot(covid.ts2,colour='#ffa756') + labs(x="Date", y="New Cases", title="covid Closed Value By Date")
+fig2<-autoplot(covid.ts2,colour='#ffa756') + labs(x="Date", y="New Cases", title="Covid Death By Date")
 fig2
 ```
 
@@ -481,7 +481,7 @@ ma10 <- autoplot(covid.ts2, series="Data") +
   ggtitle("Covid Deaths Moving Average Smoothing 20") +
   scale_colour_manual(values=c("Data"="grey50","10-MA"='blue'),
   breaks=c("Data","10-MA"))+ theme_bw()
-ma20
+ma10
 ```
 windows 20
 ```{r}
@@ -499,7 +499,7 @@ ma20
 ```{r}
 vaccine.ts1 <- ts_ts(ts_long(vaccine[which(vaccine$vaccine=='Moderna'),c(2,4)]))
 vaccine.ts1<-na.remove(vaccine.ts1)
-fig2<-autoplot(vaccine.ts1,colour='#cb0162') + labs(x="Date", y="New Cases", title="vaccine Closed Value By Date")
+fig2<-autoplot(vaccine.ts1,colour='#cb0162') + labs(x="Date", y="New Cases", title="Moderna Vaccine By Date")
 fig2
 ```
 
@@ -551,7 +551,7 @@ ma10 <- autoplot(vaccine.ts1, series="Data") +
   ggtitle("Moderna Vaccine Moving Average Smoothing 20") +
   scale_colour_manual(values=c("Data"="grey50","10-MA"='blue'),
   breaks=c("Data","10-MA"))+ theme_bw()
-ma20
+ma10
 ```
 windows 20
 ```{r}
@@ -569,7 +569,7 @@ ma20
 ```{r}
 vaccine.ts2 <- ts_ts(ts_long(vaccine[which(vaccine$vaccine=='Johnson&Johnson'),c(2,4)]))
 vaccine.ts2<-na.remove(vaccine.ts2)
-fig2<-autoplot(vaccine.ts2,colour='#b00149') + labs(x="Date", y="New Cases", title="vaccine Closed Value By Date")
+fig2<-autoplot(vaccine.ts2,colour='#b00149') + labs(x="Date", y="New Cases", title="Johnson&Johnson Vaccine By Date")
 fig2
 ```
 
@@ -623,7 +623,7 @@ ma10 <- autoplot(vaccine.ts2, series="Data") +
   ggtitle("Johnson&Johnson Moving Average Smoothing 20") +
   scale_colour_manual(values=c("Data"="grey50","10-MA"='blue'),
   breaks=c("Data","10-MA"))+ theme_bw()
-ma20
+ma10
 ```
 windows 20
 ```{r}
@@ -641,7 +641,7 @@ ma20
 ```{r}
 vaccine.ts3 <- ts_ts(ts_long(vaccine[which(vaccine$vaccine=='Pfizer/BioNTech'),c(2,4)]))
 vaccine.ts3<-na.remove(vaccine.ts3)
-fig2<-autoplot(vaccine.ts3,colour='#b66a50') + labs(x="Date", y="New Cases", title="vaccine Closed Value By Date")
+fig2<-autoplot(vaccine.ts3,colour='#b66a50') + labs(x="Date", y="New Cases", title="Pfizer Vaccine By Date")
 fig2
 ```
 
@@ -694,7 +694,7 @@ ma10 <- autoplot(vaccine.ts3, series="Data") +
   ggtitle("Pfizer vaccine Moving Average Smoothing 20") +
   scale_colour_manual(values=c("Data"="grey50","10-MA"='blue'),
   breaks=c("Data","10-MA"))+ theme_bw()
-ma20
+ma10
 ```
 windows 20
 ```{r}
