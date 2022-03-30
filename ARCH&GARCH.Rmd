@@ -1,0 +1,215 @@
+---
+title: "ARCH&GARCH"
+author: "Lin Meng"
+date: "3/29/2022"
+output: html_document
+---
+
+```{r message=FALSE, warning=FALSE}
+set.seed(666)
+library(plotly)
+library(ggfortify)
+library(ggplot2)
+library(fpp)
+library(stats)
+library(tsbox)
+library(stargazer)
+library(tidyverse)
+library(kableExtra)
+library(forecast)
+library(astsa)
+library(car)
+library(TSA)
+library(fGarch) 
+library(dynlm)
+```
+
+
+## Load Data
+```{r}
+johnson <- read.csv("data/Johnson.csv ")
+moderna <- read.csv("data/Moderna.csv ")
+pfizer <- read.csv("data/Pfizer.csv ")
+```
+
+## johnson
+
+### time series Plot
+```{r}
+johnson.ts <- ts_ts(ts_long(johnson[,c(1,5)]))
+johnson.ts <- na.remove(johnson.ts)
+fig1 <- autoplot(johnson.ts,colour='#029386') + labs(x="Date", y="Closed", title="Johnson&Johnson Closed Value By Date")
+fig1
+```
+
+### ACF + PACF
+From the above acf and pacf plot and previous analysis, the best arima model should be ARIMA(1,1,3)
+```{r}
+par(mfrow=c(1,2))
+acf(johnson.ts)
+pacf(johnson.ts)
+```
+
+### Train
+```{r}
+johnson.train <- johnson.ts[1:floor(length(johnson.ts)*0.8)]
+johnson.test <- johnson.ts[(ceiling(length(johnson.ts)*0.8)+1):length(johnson.ts)]
+johnson.ar <- arima(johnson.train, order=c(1,1,3))
+sqrt(mean(johnson.ar$residuals^2))
+```
+
+```{r}
+sarima(johnson.ts,1,1,3)
+```
+
+### Save Residuels 
+From the below acf plot, both p and q can be 1 or2. 
+```{r}
+par(mfrow=c(1,2))
+acf(johnson.ar$residuals)
+pacf(johnson.ar$residuals)
+```
+
+Comparing the RMSE, the best model is ARMA(1,1,3) + Garch(2,1)
+```{r}
+garch1 <- garch(johnson.ar$residuals,order=c(1,1),trace=F)
+garch2 <- garch(johnson.ar$residuals,order=c(1,2),trace=F)
+garch3 <- garch(johnson.ar$residuals,order=c(2,1),trace=F)
+garch4 <- garch(johnson.ar$residuals,order=c(2,2),trace=F)
+g1 <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(g1) <- c('Model','RMSE')
+g1[1,]<- c('GARCH(1,1)',sqrt(mean(na.omit(garch1$residuals^2))))
+g1[2,]<- c('GARCH(1,2)',sqrt(mean(na.omit(garch2$residuals^2))))
+g1[3,]<- c('GARCH(2,1)',sqrt(mean(na.omit(garch3$residuals^2))))
+g1[4,]<- c('GARCH(2,2)',sqrt(mean(na.omit(garch4$residuals^2))))
+g1 %>% 
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
+```
+
+The p-value of Box Ljung test is smaller than 0.05. It means there is significant correlations in residuals.
+```{r}
+summary(garch3)
+
+```
+## pfizer
+
+### time series Plot
+```{r}
+pfizer.ts <- ts_ts(ts_long(pfizer[,c(1,5)]))
+pfizer.ts <- na.remove(pfizer.ts)
+fig1 <- autoplot(pfizer.ts,colour='#e6daa6') + labs(x="Date", y="Closed", title="Stock Closed Value By Date")
+fig1
+```
+
+### ACF + PACF
+From the above acf and pacf plot and previous analysis, the best arima model should be ARIMA(1,1,3)
+```{r}
+par(mfrow=c(1,2))
+acf(pfizer.ts)
+pacf(pfizer.ts)
+```
+
+### Train
+```{r}
+pfizer.train <- pfizer.ts[1:floor(length(pfizer.ts)*0.8)]
+pfizer.test <- pfizer.ts[(ceiling(length(pfizer.ts)*0.8)+1):length(pfizer.ts)]
+pfizer.ar <- arima(pfizer.train, order=c(1,1,3))
+sqrt(mean(pfizer.ar$residuals^2))
+```
+
+```{r}
+sarima(pfizer.ts,1,1,3)
+```
+
+### Save Residuels 
+From the below acf plot, both p and q can be 1 or2. 
+```{r}
+par(mfrow=c(1,2))
+acf(pfizer.ar$residuals)
+pacf(pfizer.ar$residuals)
+```
+
+Comparing the RMSE, the best model is ARMA(1,1,3) + Garch(1,2)
+```{r}
+garch1 <- garch(pfizer.ar$residuals,order=c(1,1),trace=F)
+garch2 <- garch(pfizer.ar$residuals,order=c(1,2),trace=F)
+garch3 <- garch(pfizer.ar$residuals,order=c(2,1),trace=F)
+garch4 <- garch(pfizer.ar$residuals,order=c(2,2),trace=F)
+g1 <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(g1) <- c('Model','RMSE')
+g1[1,]<- c('GARCH(1,1)',sqrt(mean(na.omit(garch1$residuals^2))))
+g1[2,]<- c('GARCH(1,2)',sqrt(mean(na.omit(garch2$residuals^2))))
+g1[3,]<- c('GARCH(2,1)',sqrt(mean(na.omit(garch3$residuals^2))))
+g1[4,]<- c('GARCH(2,2)',sqrt(mean(na.omit(garch4$residuals^2))))
+g1 %>% 
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
+```
+
+The p-value of Box Ljung test is smaller than 0.05. It means quite significant correlations in residuals.
+```{r}
+summary(garch2)
+
+```
+
+## moderna
+
+### time series Plot
+```{r}
+moderna.ts <- ts_ts(ts_long(moderna[,c(1,5)]))
+moderna.ts <- na.remove(moderna.ts)
+fig1 <- autoplot(moderna.ts,colour='#ff796c') + labs(x="Date", y="Closed", title="Stock Closed Value By Date")
+fig1
+```
+
+### ACF + PACF
+From the above acf and pacf plot and previous analysis, the best arima model should be ARIMA(1,1,3)
+```{r}
+par(mfrow=c(1,2))
+acf(moderna.ts)
+pacf(moderna.ts)
+```
+
+### Train
+```{r}
+moderna.train <- moderna.ts[1:floor(length(moderna.ts)*0.8)]
+moderna.test <- moderna.ts[(ceiling(length(moderna.ts)*0.8)+1):length(moderna.ts)]
+moderna.ar <- arima(moderna.train, order=c(3,1,3))
+sqrt(mean(moderna.ar$residuals^2))
+```
+
+```{r}
+sarima(moderna.ts,3,1,3)
+```
+
+### Save Residuels 
+From the below acf plot, both p and q can be 1 or2. 
+```{r}
+par(mfrow=c(1,2))
+acf(moderna.ar$residuals)
+pacf(moderna.ar$residuals)
+```
+
+Comparing the RMSE, the best model is ARMA(3,1,3) + Garch(1,2)
+```{r}
+garch1 <- garch(moderna.ar$residuals,order=c(1,1),trace=F)
+garch2 <- garch(moderna.ar$residuals,order=c(1,2),trace=F)
+garch3 <- garch(moderna.ar$residuals,order=c(2,1),trace=F)
+garch4 <- garch(moderna.ar$residuals,order=c(2,2),trace=F)
+g1 <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(g1) <- c('Model','RMSE')
+g1[1,]<- c('GARCH(1,1)',sqrt(mean(na.omit(garch1$residuals^2))))
+g1[2,]<- c('GARCH(1,2)',sqrt(mean(na.omit(garch2$residuals^2))))
+g1[3,]<- c('GARCH(2,1)',sqrt(mean(na.omit(garch3$residuals^2))))
+g1[4,]<- c('GARCH(2,2)',sqrt(mean(na.omit(garch4$residuals^2))))
+g1 %>% 
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
+```
+
+The p-value of Box Ljung test is smaller than 0.05. It means quite significant correlations in residuals.
+```{r}
+summary(garch2)
+
+```
