@@ -4,7 +4,6 @@ author: "Lin Meng"
 date: "2022/2/25"
 output: html_document
 ---
-
 ```{r message=FALSE, warning=FALSE}
 library(ggfortify)
 library(ggplot2)
@@ -18,6 +17,7 @@ library(forecast)
 library(astsa)
 ```
 
+
 ## Load Data
 ```{r}
 johnson <- read.csv("data/Johnson.csv ")
@@ -25,6 +25,7 @@ moderna <- read.csv("data/Moderna.csv ")
 pfizer <- read.csv("data/Pfizer.csv ")
 vaccine <- read.csv("data/vaccine.csv")
 ```
+
 
 ## Johnson
 
@@ -114,7 +115,7 @@ auto.arima(johnson.train)
 ### 8
 #### Forecast
 ```{r}
-pred1 <- forecast(johnson.ar,length(johnson.test)+50)
+pred1 <- forecast(johnson.ar,length(johnson.test))
 autoplot(pred1) 
 autoplot(johnson.ts)
 ```
@@ -135,13 +136,18 @@ sa1[4,]<- c('SARIMA(1,1,3)x(0,2,2)',safit4$AIC,safit4$BIC)
 sa1 %>% 
   kbl() %>%
   kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
-
-johnson.sar <- Arima(johnson.train,order=c(1,1,1),seasonal=c(0,1,2))
 ```
 
 ### Sarima Forecast
 ```{r}
-pred2 <- forecast(johnson.sar,length(johnson.test)+50)
+johnson.train <- ts(johnson.train)
+johnson.test <- ts(johnson.test,start=813)
+fit2 <- Arima(johnson.train,order=c(1,1,3),include.drift=TRUE)
+johnson.sar <- Arima(johnson.train,order=c(1,1,3),seasonal = list(order=c(0,1,2),period = 48))
+```
+
+```{r}
+pred2 <- forecast(johnson.sar,length(johnson.test))
 autoplot(pred2) 
 autoplot(johnson.ts)
 ```
@@ -149,15 +155,15 @@ autoplot(johnson.ts)
 ### 9 
 #### Benchmark
 ```{r}
-f1 <- meanf(johnson.train,length(johnson.test)+50)
+f1 <- meanf(johnson.train,length(johnson.test))
 accuracy(f1)
 checkresiduals(f1)
 
-f2 <- naive(johnson.train,length(johnson.test)+50)
+f2 <- naive(johnson.train,length(johnson.test))
 accuracy(f2)
 checkresiduals(f2)
 
-f3 <- rwf(johnson.train,length(johnson.test)+50)
+f3 <- rwf(johnson.train,length(johnson.test))
 accuracy(f3)
 checkresiduals(f3)
 ```
@@ -182,23 +188,23 @@ a1 %>%
 detach(package:Metrics)
 ```
 
+
 ```{r}
-johnson.train <- ts(johnson.train)
-fit2 <- Arima(johnson.train,order=c(1,1,3),include.drift=TRUE)
-johnson.sar <- Arima(johnson.train,order=c(1,1,3),seasonal=c(0,1,1))
 autoplot(johnson.train,series='Data') +
-  autolayer(meanf(johnson.train,150),PI=FALSE,series='Mean') +
-  autolayer(naive(johnson.train,150),PI=FALSE,series='Naive') +
-  autolayer(rwf(johnson.train,150),PI=FALSE,series='Drift') +
-  autolayer(forecast(fit2,150),PI=FALSE, series='AR') +
-  autolayer(forecast(johnson.sar,150),PI=FALSE, series='SAR') +
+  autolayer(meanf(johnson.train,length(johnson.test)+50),PI=FALSE,series='Mean') +
+  autolayer(naive(johnson.train,length(johnson.test)+50),PI=FALSE,series='Naive') +
+  autolayer(rwf(johnson.train,length(johnson.test)+50),PI=FALSE,series='Drift') +
+  autolayer(forecast(fit2,length(johnson.test)+50),PI=FALSE, series='AR') +
+  autolayer(forecast(johnson.sar,length(johnson.test)+50),PI=FALSE, series='SAR') +
+  autolayer(johnson.test,PI=FALSE, series='Test') +
   xlab("Date") + ylab("Value") +
   ggtitle("Johnson&Johnson Benchmark Stock Forecast")
 ```
 
 
 
-## Pfizer
+
+## pfizer
 
 ### 1 & 2
 #### Original ACF Plot 
@@ -227,7 +233,7 @@ pfizer.df<-diff(pfizer.ts)
 ```{r}
 fig2 <- autoplot(pfizer.ts) + 
   autolayer(pfizer.df,series = 'Difference')
-fig2 <- fig2 +labs(title = "Pfizer Origin and Difference",
+fig2 <- fig2 +labs(title = "pfizer Origin and Difference",
                    x='Date',y='Value')
 fig2
 ```
@@ -284,18 +290,17 @@ auto.arima(pfizer.train)
 ### 8
 #### Forecast
 ```{r}
-pred1 <- forecast(pfizer.ar,length(pfizer.test)+50)
+pred1 <- forecast(pfizer.ar,length(pfizer.test))
 autoplot(pred1) 
 autoplot(pfizer.ts)
 ```
 
-
 ### Sarima(p,d,q) x(P,D,Q)
 ```{r}
-safit1 <- sarima(pfizer.train,1,1,3,0,1,1,4)
-safit2 <- sarima(pfizer.train,1,1,3,0,1,2,4)
-safit3 <- sarima(pfizer.train,1,1,3,0,2,1,4)
-safit4 <- sarima(pfizer.train,1,1,3,0,2,2,4)
+safit1 <- sarima(pfizer.train,1,1,3,0,1,1,1)
+safit2 <- sarima(pfizer.train,1,1,3,0,1,2,1)
+safit3 <- sarima(pfizer.train,1,1,3,0,2,1,1)
+safit4 <- sarima(pfizer.train,1,1,3,0,2,2,1)
 sa1 <- data.frame(matrix(ncol = 3, nrow = 0))
 colnames(sa1) <- c('Model','AIC','BIC')
 sa1[1,]<- c('SARIMA(1,1,3)x(0,1,1)',safit1$AIC,safit1$BIC)
@@ -305,33 +310,39 @@ sa1[4,]<- c('SARIMA(1,1,3)x(0,2,2)',safit4$AIC,safit4$BIC)
 sa1 %>% 
   kbl() %>%
   kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
-
-pfizer.sar <- Arima(pfizer.train,order=c(1,1,1),seasonal=c(0,1,1))
-
 ```
 
 ### Sarima Forecast
+
 ```{r}
-pred2 <- forecast(pfizer.sar,length(johnson.test)+50)
+pfizer.train <- ts(pfizer.train)
+pfizer.test <- ts(pfizer.test,start=813)
+fit2 <- Arima(pfizer.train,order=c(1,1,3),include.drift=TRUE)
+pfizer.sar <- Arima(pfizer.train,order=c(1,1,3),seasonal = list(order=c(0,1,1),period = 48))
+```
+
+```{r}
+pred2 <- forecast(pfizer.sar,length(pfizer.test))
 autoplot(pred2) 
-autoplot(johnson.ts)
+autoplot(pfizer.ts)
 ```
 
 ### 9 
 #### Benchmark
 ```{r}
-f1 <- meanf(pfizer.train,length(pfizer.test)+50)
+f1 <- meanf(pfizer.train,length(pfizer.test))
 accuracy(f1)
 checkresiduals(f1)
 
-f2 <- naive(pfizer.train,length(pfizer.test)+50)
+f2 <- naive(pfizer.train,length(pfizer.test))
 accuracy(f2)
 checkresiduals(f2)
 
-f3 <- rwf(pfizer.train,length(pfizer.test)+50)
+f3 <- rwf(pfizer.train,length(pfizer.test))
 accuracy(f3)
 checkresiduals(f3)
 ```
+
 
 
 ```{r message=FALSE, warning=FALSE}
@@ -354,19 +365,22 @@ a1 %>%
 detach(package:Metrics)
 ```
 
+
+
+
 ```{r}
-pfizer.train <- ts(pfizer.train)
-fit2 <- Arima(pfizer.train,order=c(1,1,3),include.drift=TRUE)
-pfizer.sar <- Arima(pfizer.train,order=c(1,1,3),seasonal=c(0,1,1))
 autoplot(pfizer.train,series='Data') +
-  autolayer(meanf(pfizer.train,150),PI=FALSE,series='Mean') +
-  autolayer(naive(pfizer.train,150),PI=FALSE,series='Naive') +
-  autolayer(rwf(pfizer.train,150),PI=FALSE,series='Drift') +
-  autolayer(forecast(fit2,150),PI=FALSE, series='AR') +
-  autolayer(forecast(pfizer.sar,150),PI=FALSE, series='SAR') +
+  autolayer(meanf(pfizer.train,length(pfizer.test)+50),PI=FALSE,series='Mean') +
+  autolayer(naive(pfizer.train,length(pfizer.test)+50),PI=FALSE,series='Naive') +
+  autolayer(rwf(pfizer.train,length(pfizer.test)+50),PI=FALSE,series='Drift') +
+  autolayer(forecast(fit2,length(pfizer.test)+50),PI=FALSE, series='AR') +
+  autolayer(forecast(pfizer.sar,length(pfizer.test)+50),PI=FALSE, series='SAR') +
+  autolayer(pfizer.test,PI=FALSE, series='Test') +
   xlab("Date") + ylab("Value") +
   ggtitle("pfizer Benchmark Stock Forecast")
 ```
+
+
 
 ## moderna
 
@@ -447,7 +461,7 @@ $$  X_{t} = 1.6268X_{t-1}+0.1617X_{t-2}+1.3978X_{t-3}-0.1917X_{t-4}+w_{t}-0.6345
 ### 6
 #### full model diagnostics
 ```{r}
-sarima(moderna.train,1,1,1)
+sarima(moderna.train,3,1,3)
 ```
 
 ### 7 
@@ -459,10 +473,11 @@ auto.arima(moderna.train)
 ### 8
 #### Forecast
 ```{r}
-pred1 <- forecast(moderna.ar,length(moderna.test)+50)
+pred1 <- forecast(moderna.ar,length(moderna.test))
 autoplot(pred1) 
 autoplot(moderna.ts)
 ```
+
 
 ### Sarima(p,d,q) x(P,D,Q)
 ```{r}
@@ -479,13 +494,19 @@ sa1[4,]<- c('SARIMA(3,1,3)x(0,2,2)',safit4$AIC,safit4$BIC)
 sa1 %>% 
   kbl() %>%
   kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "center")
-
-moderna.sar <- Arima(moderna.train,order=c(3,1,3),seasonal=c(0,1,2))
 ```
 
 ### Sarima Forecast
+
 ```{r}
-pred2 <- forecast(moderna.sar,length(moderna.test)+50)
+moderna.train <- ts(moderna.train)
+moderna.test <- ts(moderna.test,start=625)
+fit2 <- Arima(moderna.train,order=c(1,1,3),include.drift=TRUE)
+moderna.sar <- Arima(moderna.train,order=c(1,1,3),seasonal = list(order=c(0,1,2),period = 48))
+```
+
+```{r}
+pred2 <- forecast(moderna.sar,length(moderna.test))
 autoplot(pred2) 
 autoplot(moderna.ts)
 ```
@@ -493,15 +514,15 @@ autoplot(moderna.ts)
 ### 9 
 #### Benchmark
 ```{r}
-f1 <- meanf(moderna.train,length(moderna.test)+50)
+f1 <- meanf(moderna.train,length(moderna.test))
 accuracy(f1)
 checkresiduals(f1)
 
-f2 <- naive(moderna.train,length(moderna.test)+50)
+f2 <- naive(moderna.train,length(moderna.test))
 accuracy(f2)
 checkresiduals(f2)
 
-f3 <- rwf(moderna.train,length(moderna.test)+50)
+f3 <- rwf(moderna.train,length(moderna.test))
 accuracy(f3)
 checkresiduals(f3)
 ```
@@ -526,19 +547,31 @@ a1 %>%
 detach(package:Metrics)
 ```
 
+
+
+
 ```{r}
-moderna.train <- ts(moderna.train)
-fit2 <- Arima(moderna.train,order=c(1,1,3),include.drift=TRUE)
-moderna.sar <- Arima(moderna.train,order=c(1,1,3),seasonal=c(0,1,1))
 autoplot(moderna.train,series='Data') +
-  autolayer(meanf(moderna.train,150),PI=FALSE,series='Mean') +
-  autolayer(naive(moderna.train,150),PI=FALSE,series='Naive') +
-  autolayer(rwf(moderna.train,150),PI=FALSE,series='Drift') +
-  autolayer(forecast(fit2,150),PI=FALSE, series='AR') +
-  autolayer(forecast(moderna.sar,150),PI=FALSE, series='SAR') +
+  autolayer(meanf(moderna.train,length(moderna.test)+50),PI=FALSE,series='Mean') +
+  autolayer(naive(moderna.train,length(moderna.test)+50),PI=FALSE,series='Naive') +
+  autolayer(rwf(moderna.train,length(moderna.test)+50),PI=FALSE,series='Drift') +
+  autolayer(forecast(fit2,length(moderna.test)+50),PI=FALSE, series='AR') +
+  autolayer(forecast(moderna.sar,length(moderna.test)+50),PI=FALSE, series='SAR') +
+  autolayer(moderna.test,PI=FALSE, series='Test') +
   xlab("Date") + ylab("Value") +
-  ggtitle("modernaBenchmark Stock Forecast")
+  ggtitle("Moderna Benchmark Stock Forecast")
 ```
+
+
+
+
+
+
+
+
+
+
+
 
 ### vaccine 1
 #### time series Plot
@@ -705,7 +738,7 @@ v2.df<-diff(vaccine.ts2)
 ```{r}
 fig1 <- autoplot(vaccine.ts2,series = 'Origin') + 
   autolayer(v2.df,series = 'Difference')
-fig1 <- fig1 +labs(title = "Pfizer Vaccine and Difference",
+fig1 <- fig1 +labs(title = "pfizer Vaccine and Difference",
                    x='Date',y='Value')
 fig1
 ```
@@ -810,7 +843,7 @@ autoplot(vaccine.ts2,series='Data') +
   autolayer(rwf(vaccine.ts2,150),PI=FALSE,series='Drift') +
   autolayer(forecast(fit2,150),PI=FALSE, series='AR') +
   xlab("Date") + ylab("Value") +
-  ggtitle("Pfizer Benchmark Vaccine Forecast")
+  ggtitle("pfizer Benchmark Vaccine Forecast")
 ```
 
 ### vaccine 3
